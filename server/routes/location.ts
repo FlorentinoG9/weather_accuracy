@@ -14,6 +14,19 @@ export const locationRouter = new Hono();
 // POST /api/location - Store anonymous user location
 locationRouter.post("/", async (c) => {
   try {
+    // Check if database is accessible
+    if (!process.env.TURSO_DATABASE_URL) {
+      console.error("TURSO_DATABASE_URL is not set");
+      return c.json(
+        {
+          success: false,
+          error: "Database configuration error",
+          message: "TURSO_DATABASE_URL environment variable is not set",
+        },
+        500
+      );
+    }
+
     const body = await c.req.json();
     const validated = locationSchema.parse(body);
 

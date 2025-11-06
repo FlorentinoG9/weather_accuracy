@@ -51,33 +51,60 @@ export async function OPTIONS(context: APIContext) {
 }
 
 async function handleRequest(context: APIContext) {
-  const path = context.params.path || "";
-  const url = new URL(context.request.url);
+  try {
+    const path = context.params.path || "";
+    const url = new URL(context.request.url);
 
-  // Construct the request path for Hono
-  // The path param from Astro is like "weather/compare" or "location"
-  // Hono expects paths like "/weather/compare" or "/location"
-  const honoPath = path.startsWith("/") ? path : `/${path}`;
+    // Construct the request path for Hono
+    // The path param from Astro is like "weather/compare" or "location"
+    // Hono expects paths like "/weather/compare" or "/location"
+    const honoPath = path.startsWith("/") ? path : `/${path}`;
 
-  // Construct the request for Hono
-  const honoRequest = new Request(`${url.origin}${honoPath}${url.search}`, {
-    method: context.request.method,
-    headers: context.request.headers,
-    body:
-      context.request.method !== "GET" && context.request.method !== "HEAD"
-        ? await context.request.text()
-        : undefined,
-  });
+    // Construct the request for Hono
+    const honoRequest = new Request(`${url.origin}${honoPath}${url.search}`, {
+      method: context.request.method,
+      headers: context.request.headers,
+      body:
+        context.request.method !== "GET" && context.request.method !== "HEAD"
+          ? await context.request.text()
+          : undefined,
+    });
 
-  const response = await app.fetch(honoRequest);
+    const response = await app.fetch(honoRequest);
 
-  // Convert Hono response to Astro response
-  const responseBody = await response.text();
-  const headers = Object.fromEntries(response.headers.entries());
+    // Convert Hono response to Astro response
+    const responseBody = await response.text();
+    const headers = Object.fromEntries(response.headers.entries());
 
-  return new Response(responseBody, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+    return new Response(responseBody, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  } catch (error) {
+    // Log the error for debugging in Cloudflare
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error("API route error:", {
+      message: errorMessage,
+      stack: errorStack,
+      error: error,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Internal server error",
+        message: errorMessage,
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
 }
