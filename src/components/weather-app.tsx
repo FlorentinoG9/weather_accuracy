@@ -55,8 +55,8 @@ export function WeatherApp() {
         </header>
 
         {location ? (
-          <div className="space-y-8">
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+          <div className="flex flex-col gap-4">
+            <div className="flex-1 rounded-lg bg-white p-6 shadow-lg">
               <WeatherComparison
                 latitude={location.latitude}
                 longitude={location.longitude}
@@ -65,7 +65,7 @@ export function WeatherApp() {
             </div>
 
             {locationId && (
-              <div className="rounded-lg bg-white p-6 shadow-lg">
+              <div className="flex-1 rounded-lg bg-white p-6 shadow-lg">
                 <AccuracyChart locationId={locationId} />
               </div>
             )}
