@@ -60,6 +60,7 @@ export function WeatherApp() {
               <WeatherComparison
                 latitude={location.latitude}
                 longitude={location.longitude}
+                onLocationId={setLocationId}
               />
             </div>
 

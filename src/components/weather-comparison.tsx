@@ -7,11 +7,13 @@ import type {
 type WeatherComparisonProps = {
   latitude: number;
   longitude: number;
+  onLocationId?: (locationId: number) => void;
 };
 
 export function WeatherComparison({
   latitude,
   longitude,
+  onLocationId,
 }: WeatherComparisonProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +27,15 @@ export function WeatherComparison({
     setError(null);
 
     try {
+      // Get session ID from localStorage or generate one
+      let sessionId = localStorage.getItem("weather_app_session_id");
+      if (!sessionId) {
+        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("weather_app_session_id", sessionId);
+      }
+
       const response = await fetch(
-        `/api/weather/compare?lat=${latitude}&lon=${longitude}`
+        `/api/weather/compare?lat=${latitude}&lon=${longitude}&sessionId=${encodeURIComponent(sessionId)}`
       );
 
       if (!response.ok) {
@@ -42,6 +51,10 @@ export function WeatherComparison({
           setServiceErrors(data.debug.errors);
         } else {
           setServiceErrors([]);
+        }
+        // Pass locationId to parent if available
+        if (data.locationId && onLocationId) {
+          onLocationId(data.locationId);
         }
       } else {
         throw new Error(data.error || "Failed to compare weather");

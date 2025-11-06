@@ -12,15 +12,15 @@ function calculateAccuracyScore(
   forecast: ForecastData,
   actual: WeatherData
 ): number {
-  let score = 100;
-  let factors = 0;
+  let score = 0;
+  let totalWeight = 0;
 
   // Temperature accuracy (weight: 40%)
   if (forecast.temperature !== undefined && actual.temperature !== undefined) {
     const tempError = Math.abs(forecast.temperature - actual.temperature);
     const tempScore = Math.max(0, 100 - tempError * 2); // 1°F = 2 points
     score += tempScore * 0.4;
-    factors += 0.4;
+    totalWeight += 0.4;
   }
 
   // Humidity accuracy (weight: 20%)
@@ -28,7 +28,7 @@ function calculateAccuracyScore(
     const humidityError = Math.abs(forecast.humidity - actual.humidity);
     const humidityScore = Math.max(0, 100 - humidityError); // 1% = 1 point
     score += humidityScore * 0.2;
-    factors += 0.2;
+    totalWeight += 0.2;
   }
 
   // Pressure accuracy (weight: 20%)
@@ -36,7 +36,7 @@ function calculateAccuracyScore(
     const pressureError = Math.abs(forecast.pressure - actual.pressure);
     const pressureScore = Math.max(0, 100 - pressureError * 2); // 0.5 hPa = 1 point
     score += pressureScore * 0.2;
-    factors += 0.2;
+    totalWeight += 0.2;
   }
 
   // Wind speed accuracy (weight: 20%)
@@ -44,10 +44,11 @@ function calculateAccuracyScore(
     const windError = Math.abs(forecast.windSpeed - actual.windSpeed);
     const windScore = Math.max(0, 100 - windError * 5); // 0.2 mph = 1 point
     score += windScore * 0.2;
-    factors += 0.2;
+    totalWeight += 0.2;
   }
 
-  return factors > 0 ? score / factors : 0;
+  // Return weighted average (0-100)
+  return totalWeight > 0 ? Math.min(100, Math.max(0, score / totalWeight)) : 0;
 }
 
 // GET /api/accuracy/:locationId - Get accuracy metrics for a location
