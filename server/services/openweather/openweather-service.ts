@@ -1,5 +1,5 @@
-import { config } from "dotenv";
 import type { WeatherServiceResponse } from "../../../src/lib/weather-types.js";
+import { loadEnvIfNeeded } from "../../lib/env-loader.js";
 import type { WeatherService, WeatherServiceConfig } from "../sdk.js";
 import {
   fetchOpenWeatherCurrent,
@@ -11,8 +11,8 @@ import {
   transformForecast,
 } from "./openweather-transform.js";
 
-// Load environment variables
-config();
+// Load environment variables (only in Node.js, not in Cloudflare Workers)
+loadEnvIfNeeded();
 
 /**
  * OpenWeatherMap Service implementation

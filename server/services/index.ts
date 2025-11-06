@@ -1,11 +1,12 @@
-import { config } from "dotenv";
+import { loadEnvIfNeeded } from "../lib/env-loader.js";
 import { NOAAService } from "./noaa/noaa-service.js";
 import { OpenWeatherService } from "./openweather/openweather-service.js";
 import { weatherServiceRegistry } from "./sdk.js";
 import { WeatherAPIService } from "./weatherapi/weatherapi-service.js";
 
 // Load environment variables first (before instantiating services)
-config();
+// Only works in Node.js, not in Cloudflare Workers
+loadEnvIfNeeded();
 
 // Log API key status for debugging (without exposing actual keys)
 console.log("Environment check:");

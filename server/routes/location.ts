@@ -51,11 +51,27 @@ locationRouter.post("/", async (c) => {
       );
     }
 
-    console.error("Location storage error:", error);
+    // Log detailed error for debugging (in production, check Cloudflare logs)
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error("Location storage error:", {
+      message: errorMessage,
+      stack: errorStack,
+      error: error,
+    });
+
+    // Return more detailed error in development, generic in production
+    const isDevelopment =
+      typeof process !== "undefined" &&
+      process.env.NODE_ENV === "development";
+
     return c.json(
       {
         success: false,
         error: "Failed to store location",
+        ...(isDevelopment && { details: errorMessage }),
       },
       500
     );
