@@ -261,7 +261,7 @@ export function AccuracyChart({ locationId }: AccuracyChartProps) {
 
           return (
             <div
-              className="rounded-lg border bg-white p-4 shadow-sm"
+              className="rounded-lg border bg-white p-4 shadow"
               key={service}
               style={{ borderColor: getServiceColor(service) }}
             >
