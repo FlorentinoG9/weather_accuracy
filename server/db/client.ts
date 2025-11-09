@@ -1,10 +1,10 @@
 import { createClient } from "@libsql/client";
+import { config as dotenvConfig } from "dotenv";
 import { drizzle } from "drizzle-orm/libsql";
-import { loadEnvIfNeeded } from "../lib/env-loader.js";
 import * as schema from "./schema";
 
 // Load environment variables (only in Node.js, not in Cloudflare Workers)
-loadEnvIfNeeded();
+dotenvConfig({ path: ".env" });
 
 function createDatabaseClient() {
   const databaseUrl = process.env.TURSO_DATABASE_URL;

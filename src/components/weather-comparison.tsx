@@ -1,8 +1,187 @@
+import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
 import type {
   ComparisonResult,
   WeatherServiceResponse,
 } from "../lib/weather-types";
+
+type ServiceError = {
+  service: string;
+  error: string;
+};
+
+const serviceEnvKeys: Record<string, string> = {
+  openweather: "OPENWEATHER_API_KEY",
+  weatherapi: "WEATHERAPI_KEY",
+};
+
+const getServiceEnvKey = (service: string): string => {
+  if (serviceEnvKeys[service]) {
+    return serviceEnvKeys[service];
+  }
+  return "API key";
+};
+
+const getServiceName = (service: string): string => {
+  switch (service) {
+    case "noaa":
+      return "NOAA";
+    case "openweather":
+      return "OpenWeather";
+    case "weatherapi":
+      return "WeatherAPI";
+    default:
+      return service;
+  }
+};
+
+const getServiceColor = (service: string): string => {
+  switch (service) {
+    case "noaa":
+      return "border-blue-500 bg-blue-50";
+    case "openweather":
+      return "border-green-500 bg-green-50";
+    case "weatherapi":
+      return "border-purple-500 bg-purple-50";
+    default:
+      return "border-gray-500 bg-gray-50";
+  }
+};
+
+const renderServiceSupportTip = (err: ServiceError): JSX.Element | null => {
+  const envKey = getServiceEnvKey(err.service);
+  if (err.error.includes("Invalid API key")) {
+    return (
+      <div className="mt-1 text-red-600 text-xs">
+        💡 Check your {envKey} in your .env file
+      </div>
+    );
+  }
+  if (err.error.includes("not configured")) {
+    return (
+      <div className="mt-1 text-red-600 text-xs">
+        💡 Add your {envKey} to your .env file and restart the server
+      </div>
+    );
+  }
+  return null;
+};
+
+const formatHumidity = (humidity: number | null | undefined): string => {
+  if (typeof humidity !== "number" || Number.isNaN(humidity)) {
+    return "N/A";
+  }
+  return humidity.toFixed(2);
+};
+
+const WeatherServiceCard = ({
+  service,
+}: {
+  service: WeatherServiceResponse;
+}): JSX.Element => (
+  <div
+    className={`rounded-lg border-2 p-6 ${getServiceColor(service.service)} shadow-md`}
+  >
+    <div className="mb-4 flex items-center justify-between">
+      <h3 className="font-bold text-gray-800 text-xl">
+        {getServiceName(service.service)}
+      </h3>
+      <span className="text-gray-500 text-sm">
+        {new Date(service.current.timestamp).toLocaleTimeString()}
+      </span>
+    </div>
+
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-gray-600">Temperature</span>
+        <span className="font-bold text-2xl text-gray-800">
+          {service.current.temperature}°F
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-gray-600">Humidity</span>
+        <span className="font-semibold text-gray-800">
+          {`${formatHumidity(service.current.humidity)}%`}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-gray-600">Pressure</span>
+        <span className="font-semibold text-gray-800">
+          {service.current.pressure} hPa
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-gray-600">Wind Speed</span>
+        <span className="font-semibold text-gray-800">
+          {service.current.windSpeed} mph
+        </span>
+      </div>
+
+      {service.current.windDirection !== undefined && (
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600">Wind Direction</span>
+          <span className="font-semibold text-gray-800">
+            {service.current.windDirection}°
+          </span>
+        </div>
+      )}
+
+      <div className="border-gray-300 border-t pt-3">
+        <p className="mb-1 font-semibold text-gray-700 text-sm">Condition</p>
+        <p className="text-gray-600">{service.current.condition}</p>
+        {service.current.description && (
+          <p className="mt-1 text-gray-500 text-xs">
+            {service.current.description}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const ServiceErrorsList = ({
+  errors,
+}: {
+  errors: ServiceError[];
+}): JSX.Element | null => {
+  if (errors.length === 0) {
+    return null;
+  }
+  return (
+    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+      <h3 className="mb-2 font-semibold text-red-800">
+        Service Errors ({errors.length})
+      </h3>
+      <ul className="space-y-2 text-sm">
+        {errors.map((err) => {
+          const supportTip = renderServiceSupportTip(err);
+          const key = `${err.service}-${err.error}`;
+          return (
+            <li className="text-red-700" key={key}>
+              <strong>{getServiceName(err.service)}:</strong> {err.error}
+              {supportTip}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
+
+const ensureSessionId = (): string => {
+  const existingSessionId = localStorage.getItem("weather_app_session_id");
+  if (existingSessionId) {
+    return existingSessionId;
+  }
+  const newSessionId = `session_${Date.now()}_${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
+  localStorage.setItem("weather_app_session_id", newSessionId);
+  return newSessionId;
+};
 
 type WeatherComparisonProps = {
   latitude: number;
@@ -18,21 +197,14 @@ export function WeatherComparison({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
-  const [serviceErrors, setServiceErrors] = useState<
-    Array<{ service: string; error: string }>
-  >([]);
+  const [serviceErrors, setServiceErrors] = useState<ServiceError[]>([]);
 
   const fetchComparison = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Get session ID from localStorage or generate one
-      let sessionId = localStorage.getItem("weather_app_session_id");
-      if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem("weather_app_session_id", sessionId);
-      }
+      const sessionId = ensureSessionId();
 
       const response = await fetch(
         `/api/weather/compare?lat=${latitude}&lon=${longitude}&sessionId=${encodeURIComponent(sessionId)}`
@@ -44,57 +216,25 @@ export function WeatherComparison({
 
       const data = await response.json();
 
-      if (data.success) {
-        setComparison(data.comparison);
-        // Store service errors if any
-        if (data.debug?.errors) {
-          setServiceErrors(data.debug.errors);
-        } else {
-          setServiceErrors([]);
-        }
-        // Pass locationId to parent if available
-        if (data.locationId && onLocationId) {
-          onLocationId(data.locationId);
-        }
-      } else {
+      if (!data.success) {
         throw new Error(data.error || "Failed to compare weather");
+      }
+
+      setComparison(data.comparison);
+      setServiceErrors(data.debug?.errors ?? []);
+      if (typeof data.locationId === "number") {
+        onLocationId?.(data.locationId);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
-  }, [latitude, longitude]);
+  }, [latitude, longitude, onLocationId]);
 
   useEffect(() => {
     fetchComparison();
   }, [fetchComparison]);
-
-  const getServiceName = (service: string) => {
-    switch (service) {
-      case "noaa":
-        return "NOAA";
-      case "openweather":
-        return "OpenWeather";
-      case "weatherapi":
-        return "WeatherAPI";
-      default:
-        return service;
-    }
-  };
-
-  const getServiceColor = (service: string) => {
-    switch (service) {
-      case "noaa":
-        return "border-blue-500 bg-blue-50";
-      case "openweather":
-        return "border-green-500 bg-green-50";
-      case "weatherapi":
-        return "border-purple-500 bg-purple-50";
-      default:
-        return "border-gray-500 bg-gray-50";
-    }
-  };
 
   if (loading) {
     return (
@@ -158,109 +298,11 @@ export function WeatherComparison({
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {comparison.services.map((service: WeatherServiceResponse) => (
-          <div
-            className={`rounded-lg border-2 p-6 ${getServiceColor(service.service)} shadow-md`}
-            key={service.service}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-bold text-gray-800 text-xl">
-                {getServiceName(service.service)}
-              </h3>
-              <span className="text-gray-500 text-sm">
-                {new Date(service.current.timestamp).toLocaleTimeString()}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Temperature</span>
-                <span className="font-bold text-2xl text-gray-800">
-                  {service.current.temperature}°F
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Humidity</span>
-                <span className="font-semibold text-gray-800">
-                  {service.current.humidity}%
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Pressure</span>
-                <span className="font-semibold text-gray-800">
-                  {service.current.pressure} hPa
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Wind Speed</span>
-                <span className="font-semibold text-gray-800">
-                  {service.current.windSpeed} mph
-                </span>
-              </div>
-
-              {service.current.windDirection !== undefined && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Wind Direction</span>
-                  <span className="font-semibold text-gray-800">
-                    {service.current.windDirection}°
-                  </span>
-                </div>
-              )}
-
-              <div className="border-gray-300 border-t pt-3">
-                <p className="mb-1 font-semibold text-gray-700 text-sm">
-                  Condition
-                </p>
-                <p className="text-gray-600">{service.current.condition}</p>
-                {service.current.description && (
-                  <p className="mt-1 text-gray-500 text-xs">
-                    {service.current.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <WeatherServiceCard key={service.service} service={service} />
         ))}
       </div>
 
-      {serviceErrors.length > 0 && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-          <h3 className="mb-2 font-semibold text-red-800">
-            Service Errors ({serviceErrors.length})
-          </h3>
-          <ul className="space-y-2 text-sm">
-            {serviceErrors.map((err, idx) => (
-              <li key={idx} className="text-red-700">
-                <strong>{getServiceName(err.service)}:</strong> {err.error}
-                {err.error.includes("Invalid API key") && (
-                  <div className="mt-1 text-xs text-red-600">
-                    💡 Check your{" "}
-                    {err.service === "openweather"
-                      ? "OPENWEATHER_API_KEY"
-                      : err.service === "weatherapi"
-                        ? "WEATHERAPI_KEY"
-                        : "API key"}{" "}
-                    in your .env file
-                  </div>
-                )}
-                {err.error.includes("not configured") && (
-                  <div className="mt-1 text-xs text-red-600">
-                    💡 Add your{" "}
-                    {err.service === "openweather"
-                      ? "OPENWEATHER_API_KEY"
-                      : err.service === "weatherapi"
-                        ? "WEATHERAPI_KEY"
-                        : "API key"}{" "}
-                    to your .env file and restart the server
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ServiceErrorsList errors={serviceErrors} />
 
       <div className="mt-6 rounded-lg bg-gray-50 p-4">
         <h3 className="mb-2 font-semibold text-gray-800">Comparison Summary</h3>
@@ -281,9 +323,11 @@ export function WeatherComparison({
           <div className="flex justify-between">
             <span className="text-gray-600">Humidity Range:</span>
             <span className="font-semibold">
-              {Math.min(...comparison.services.map((s) => s.current.humidity))}%
-              -{" "}
-              {Math.max(...comparison.services.map((s) => s.current.humidity))}%
+              {`${Math.min(
+                ...comparison.services.map((s) => s.current.humidity)
+              ).toFixed(2)}% - ${Math.max(
+                ...comparison.services.map((s) => s.current.humidity)
+              ).toFixed(2)}%`}
             </span>
           </div>
           <div className="flex justify-between">

@@ -60,7 +60,7 @@ export class WeatherAPIService implements WeatherService {
         baseUrl,
         apiKey,
         latitude,
-        longitude,
+        longitude
       );
 
       // Transform data
