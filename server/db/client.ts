@@ -16,6 +16,12 @@ function createDatabaseClient() {
     );
   }
 
+  if (!authToken) {
+    throw new Error(
+      "TURSO_AUTH_TOKEN is not set. Please set it as an environment variable in Cloudflare Pages or in your .env file for local development. Without the auth token, the database will return 401 authentication errors."
+    );
+  }
+
   try {
     const tursoClient = createClient({
       url: databaseUrl,

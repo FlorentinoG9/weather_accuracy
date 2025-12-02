@@ -71,4 +71,3 @@ export function extractLocation(
     country: currentData.sys.country || forecastData.city.country,
   };
 }
-

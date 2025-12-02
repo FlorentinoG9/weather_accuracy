@@ -79,9 +79,12 @@ export class NOAAService implements WeatherService {
         location,
       };
     } catch (error) {
-      throw new Error(
-        `NOAA API error: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
+      // Re-throw the error as-is since API functions already include context
+      // Only wrap if it's not already an Error with a message
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`NOAA API error: ${String(error)}`);
     }
   }
 }

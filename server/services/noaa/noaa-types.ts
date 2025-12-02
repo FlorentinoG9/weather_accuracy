@@ -61,4 +61,3 @@ export type NOAAForecastResponse = {
     periods: NOAAForecast[];
   };
 };
-

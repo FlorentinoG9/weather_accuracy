@@ -10,7 +10,7 @@ export async function fetchOpenWeatherCurrent(
   baseUrl: string,
   apiKey: string,
   latitude: number,
-  longitude: number,
+  longitude: number
 ): Promise<OpenWeatherCurrentResponse> {
   const response = await fetch(
     `${baseUrl}/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`,
@@ -36,7 +36,7 @@ export async function fetchOpenWeatherForecast(
   baseUrl: string,
   apiKey: string,
   latitude: number,
-  longitude: number,
+  longitude: number
 ): Promise<OpenWeatherForecastResponse> {
   const response = await fetch(
     `${baseUrl}/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`,
@@ -54,4 +54,3 @@ export async function fetchOpenWeatherForecast(
 
   return response.json();
 }
-

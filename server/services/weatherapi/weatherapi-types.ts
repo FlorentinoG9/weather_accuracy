@@ -63,4 +63,3 @@ export type WeatherAPIForecastResponse = {
     forecastday: WeatherAPIForecastDay[];
   };
 };
-

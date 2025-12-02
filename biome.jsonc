@@ -7,7 +7,7 @@
         "noNamespaceImport": "off",
         "noBarrelFile": "off"
       },
-      "nursery":{
+      "nursery": {
         "noShadow": "off"
       }
     }

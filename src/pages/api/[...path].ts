@@ -90,7 +90,7 @@ async function handleRequest(context: APIContext) {
     console.error("API route error:", {
       message: errorMessage,
       stack: errorStack,
-      error: error,
+      error,
     });
 
     return new Response(

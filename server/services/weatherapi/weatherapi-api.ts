@@ -8,7 +8,7 @@ export async function fetchWeatherAPIForecast(
   baseUrl: string,
   apiKey: string,
   latitude: number,
-  longitude: number,
+  longitude: number
 ): Promise<WeatherAPIForecastResponse> {
   const response = await fetch(
     `${baseUrl}/forecast.json?key=${apiKey}&q=${latitude},${longitude}&days=3&aqi=no&alerts=no`,
@@ -24,17 +24,18 @@ export async function fetchWeatherAPIForecast(
       errorData.message ||
       response.statusText ||
       "Unknown error";
-    
+
     // Handle specific error cases
     if (response.status === 401 || errorMessage.includes("API key")) {
       throw new Error(
         `WeatherAPI error: Invalid API key - ${errorMessage}. Please check your WEATHERAPI_KEY in your .env file`
       );
     }
-    
-    throw new Error(`WeatherAPI error: ${response.statusText} - ${errorMessage}`);
+
+    throw new Error(
+      `WeatherAPI error: ${response.statusText} - ${errorMessage}`
+    );
   }
 
   return response.json();
 }
-

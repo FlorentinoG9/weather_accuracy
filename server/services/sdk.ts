@@ -1,6 +1,4 @@
-import type {
-  WeatherServiceResponse,
-} from "../../src/lib/weather-types.js";
+import type { WeatherServiceResponse } from "../../src/lib/weather-types.js";
 
 /**
  * Configuration type for weather services
@@ -48,7 +46,7 @@ export type WeatherService = {
    * @returns Configuration object or null if not configured
    */
   getConfig(): WeatherServiceConfig | null;
-}
+};
 
 /**
  * Result of attempting to fetch from a weather service
@@ -236,7 +234,7 @@ export class WeatherServiceRegistry {
   size(): number {
     return this.services.size;
   }
-};
+}
 
 // Ensure WeatherService is treated as an interface for implementation
 export type { WeatherService as IWeatherService };
@@ -245,4 +243,3 @@ export type { WeatherService as IWeatherService };
  * Default singleton registry instance
  */
 export const weatherServiceRegistry = new WeatherServiceRegistry();
-
